@@ -1,5 +1,6 @@
 import sys
 import os
+from pathlib import Path
 import json
 import subprocess
 import time
@@ -9,111 +10,113 @@ import tempfile
 import shutil
 from collections import defaultdict
 
+ROOT = Path(__file__).resolve().parents[3]
+
 # =================[ 언어별 설정 ]=================
 
 LANG_CONFIGS = {
     "smallbasic": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-smallbasic/smallbasic.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/smallbasic/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/smallbasic",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/smallbasic",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/smallbasic/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-smallbasic/smallbasic.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/smallbasic/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/smallbasic'),
+        "report":    str(ROOT / 'tree-sitter/reports/smallbasic'),
+        "db":        str(ROOT / 'code-completion-extension/resources/smallbasic/candidates.json'),
         "ext":       ".sb",
         "walk":      False,  # glob (flat)
     },
     "c": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-c/c.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/c/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/c",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/c",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/c/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-c/c.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/c/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/c'),
+        "report":    str(ROOT / 'tree-sitter/reports/c'),
+        "db":        str(ROOT / 'code-completion-extension/resources/c/candidates.json'),
         "ext":       ".c",
         "walk":      True,
     },
     "cpp": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-cpp/cpp.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/cpp/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/cpp",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/cpp",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/cpp/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-cpp/cpp.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/cpp/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/cpp'),
+        "report":    str(ROOT / 'tree-sitter/reports/cpp'),
+        "db":        str(ROOT / 'code-completion-extension/resources/cpp/candidates.json'),
         "ext":       [".cpp", ".cc", ".cxx"],
         "walk":      True,
         "skip_dirs": {".git", "build", "vendor"},
     },
     "java": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-java/java.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/java/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/java",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/java",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/java/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-java/java.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/java/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/java'),
+        "report":    str(ROOT / 'tree-sitter/reports/java'),
+        "db":        str(ROOT / 'code-completion-extension/resources/java/candidates.json'),
         "ext":       ".java",
         "walk":      True,
         "skip_dirs": {".git", "build", "target"},
     },
     "javascript": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-javascript/javascript.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/javascript/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/javascript",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/javascript",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/javascript/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-javascript/javascript.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/javascript/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/javascript'),
+        "report":    str(ROOT / 'tree-sitter/reports/javascript'),
+        "db":        str(ROOT / 'code-completion-extension/resources/javascript/candidates.json'),
         "ext":       ".js",
         "walk":      True,
         "skip_dirs": {".git", "node_modules", "vendor"},
     },
     "python": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-python/python.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/python/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/python",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/python",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/python/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-python/python.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/python/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/python'),
+        "report":    str(ROOT / 'tree-sitter/reports/python'),
+        "db":        str(ROOT / 'code-completion-extension/resources/python/candidates.json'),
         "ext":       ".py",
         "walk":      True,
         "skip_dirs": {".git", "build", "__pycache__"},
     },
     "typescript": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-typescript/typescript/parser.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/typescript/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/typescript",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/typescript",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/typescript/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-typescript/typescript/parser.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/typescript/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/typescript'),
+        "report":    str(ROOT / 'tree-sitter/reports/typescript'),
+        "db":        str(ROOT / 'code-completion-extension/resources/typescript/candidates.json'),
         "ext":       ".ts",
         "walk":      True,
         "exercism":  ("exercism-typescript-main", lambda p: p.split("/")[-2] == ".meta" and p.split("/")[-1] in ("proof.ci.ts", "exemplar.ts")),
         "skip_dirs": {".git", "node_modules", "dist", "build"},
     },
     "php": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-php/php/parser.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/php/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/php",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/php",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/php/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-php/php/parser.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/php/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/php'),
+        "report":    str(ROOT / 'tree-sitter/reports/php'),
+        "db":        str(ROOT / 'code-completion-extension/resources/php/candidates.json'),
         "ext":       ".php",
         "walk":      True,
         "skip_dirs": {".git", "vendor", "node_modules"},
     },
     "ruby": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-ruby/ruby.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/ruby/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/ruby",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/ruby",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/ruby/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-ruby/ruby.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/ruby/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/ruby'),
+        "report":    str(ROOT / 'tree-sitter/reports/ruby'),
+        "db":        str(ROOT / 'code-completion-extension/resources/ruby/candidates.json'),
         "ext":       ".rb",
         "walk":      True,
         "skip_dirs": {".git", "vendor", "node_modules"},
     },
     "haskell": {
-        "lib":       "/home/hyeonjin/PL/tree-sitter-haskell/haskell.so",
-        "src":       "/home/hyeonjin/PL/codecompletion_benchmarks/haskell/TEST",
-        "answer":    "/home/hyeonjin/PL/tree-sitter/reports/haskell",
-        "report":    "/home/hyeonjin/PL/tree-sitter/reports/haskell",
-        "db":        "/home/hyeonjin/PL/code-completion-extension/resources/haskell/candidates.json",
+        "lib":       str(ROOT / 'tree-sitter-haskell/haskell.so'),
+        "src":       str(ROOT / 'codecompletion_benchmarks/haskell/TEST'),
+        "answer":    str(ROOT / 'tree-sitter/reports/haskell'),
+        "report":    str(ROOT / 'tree-sitter/reports/haskell'),
+        "db":        str(ROOT / 'code-completion-extension/resources/haskell/candidates.json'),
         "ext":       ".hs",
         "walk":      True,
         "skip_dirs": {".git", "build", "dist", "dist-newstyle", ".stack-work"},
     },
 }
 
-EXE_PATH = "/home/hyeonjin/PL/tree-sitter/TreeSitterCutFile.exe"
+EXE_PATH = str(ROOT / 'tree-sitter/TreeSitterCutFile.exe')
 MAX_CANDIDATE_LIST_SIZE = 1100
 
 # =========================================================
