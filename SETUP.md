@@ -53,37 +53,19 @@ Ubuntu 22.04 기준,
 
 ## 4. 경로 설정 (필수)
 
-스크립트에 작성자의 경로 `/home/hyeonjin/PL`이 하드코딩되어 있습니다.
-**실행 전에 자신의 환경에 맞는 프로젝트 루트 경로로 반드시 수정해야 합니다.**
-
-현재 자신의 프로젝트 위치를 먼저 확인합니다.
-
-```bash
-cd ~/PL/tree-sitter
-pwd
-```
-
-예를 들어 프로젝트 루트가 `/home/tester/PL`이라면, 기존의
-
-```text
-/home/hyeonjin/PL
-```
-
-을
-
-```text
-/home/tester/PL
-```
-
-로 변경합니다.
-
-> **주의:** 파일마다 경로가 작성된 방식이 다릅니다.
-> 어떤 파일은 `ROOT` 변수 하나만 수정하면 되지만, `evaluate_coverage.py`처럼 언어별 설정에 `/home/hyeonjin/PL/...` 경로가 직접 작성된 파일도 있습니다. 따라서 **단순히 `ROOT` 변수만 수정하지 말고, 각 파일에서 `/home/hyeonjin/PL`이 남아 있는지 반드시 확인하십시오.**
-
-현재 경로가 올바르게 수정되었는지 다음 명령어로 확인할 수 있습니다.
+환경 변수 CODE_COMPLETION_ROOT에 tree-sitter를 내려받은 디렉토리를 루트 경로로 설정합니다.
+예를 들어, `/home/hyeonjin/PL/tree-sitter`에 위 tree-sitter의 Candidate_Collection 브랜치를 내려받았다고 가정하면
+ROOT는 `/home/hyeonjin/PL`로 설정합니다. 설정 방법을 아래와 같습니다. 
 
 ```bash
-grep -Rni "/home/hyeonjin/PL" \
+cd ~/PL
+export CODE_COMPLETION_ROOT=`pwd`
+cd ./tree-sitter
+```
+
+이 환경 변수 CODE_COMPLETION_ROOT를 사용하는 파이썬 프로그램은 다음과 같습니다. 
+
+```
     to_data_batch_collect_learn.py \
     to_data_batch_collect_test.py \
     to_json_aggregate.py \
@@ -91,7 +73,6 @@ grep -Rni "/home/hyeonjin/PL" \
     evaluate_coverage.py
 ```
 
-**아무것도 출력되지 않으면 해당 파일들에서 기존 작성자의 경로가 모두 제거된 것입니다.**
 
 | 구분 | 파일 |
 |---|---|
