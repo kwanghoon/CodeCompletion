@@ -17,7 +17,7 @@ import shutil
 import tempfile
 
 # =================[ 경로 설정 ]=================
-ROOT = "/home/hyeonjin/PL"
+ROOT = os.environ.get("CODE_COMPLETION_ROOT", ".")
 TS_DIR = os.path.join(ROOT, "tree-sitter")
 EXE_PATH = os.path.join(TS_DIR, "TreeSitterCutFile.exe")
 CONFIG_PATH = os.path.join(TS_DIR, "lang_config.json")

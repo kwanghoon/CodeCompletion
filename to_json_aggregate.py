@@ -15,7 +15,7 @@ import sqlite3
 import json
 
 # =================[ 경로 설정 ]=================
-ROOT = "/home/hyeonjin/PL"
+ROOT = os.environ.get("CODE_COMPLETION_ROOT", ".")
 EXT_DIR = os.path.join(ROOT, "code-completion-extension")
 
 
